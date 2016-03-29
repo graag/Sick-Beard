@@ -1281,7 +1281,8 @@ class ConfigNotifications:
                           pytivo_host=None, pytivo_share_name=None, pytivo_tivo_name=None,
                           use_nma=None, nma_notify_onsnatch=None, nma_notify_ondownload=None, nma_api=None, nma_priority=None,
                           use_pushalot=None, pushalot_notify_onsnatch=None, pushalot_notify_ondownload=None, pushalot_authorizationtoken=None, pushalot_silent=None, pushalot_important=None,
-                          use_pushbullet=None, pushbullet_notify_onsnatch=None, pushbullet_notify_ondownload=None, pushbullet_access_token=None, pushbullet_device_iden=None, pushbullet_device_list=None
+                          use_pushbullet=None, pushbullet_notify_onsnatch=None, pushbullet_notify_ondownload=None, pushbullet_access_token=None, pushbullet_device_iden=None, pushbullet_device_list=None,
+                          use_slack=None, slack_notify_onsnatch=None, slack_notify_ondownload=None, slack_access_token=None, slack_channel=None, slack_bot_name=None, slack_icon_url=None
                           ):
 
         results = []
@@ -1341,7 +1342,7 @@ class ConfigNotifications:
         sickbeard.PROWL_NOTIFY_ONSNATCH = config.checkbox_to_value(prowl_notify_onsnatch)
         sickbeard.PROWL_NOTIFY_ONDOWNLOAD = config.checkbox_to_value(prowl_notify_ondownload)
         sickbeard.PROWL_API = prowl_api
-        sickbeard.PROWL_PRIORITY = prowl_priority
+        sickbeard.PROWL_PRIORITY = config.to_int(prowl_priority)
 
         sickbeard.USE_LIBNOTIFY = config.checkbox_to_value(use_libnotify)
         sickbeard.LIBNOTIFY_NOTIFY_ONSNATCH = config.checkbox_to_value(libnotify_notify_onsnatch)
@@ -1351,7 +1352,7 @@ class ConfigNotifications:
         sickbeard.PUSHOVER_NOTIFY_ONSNATCH = config.checkbox_to_value(pushover_notify_onsnatch)
         sickbeard.PUSHOVER_NOTIFY_ONDOWNLOAD = config.checkbox_to_value(pushover_notify_ondownload)
         sickbeard.PUSHOVER_USERKEY = pushover_userkey
-        sickbeard.PUSHOVER_PRIORITY = pushover_priority
+        sickbeard.PUSHOVER_PRIORITY = config.to_int(pushover_priority)
         sickbeard.PUSHOVER_DEVICE = pushover_device
         sickbeard.PUSHOVER_SOUND = pushover_sound
 
@@ -1365,7 +1366,7 @@ class ConfigNotifications:
         sickbeard.NMA_NOTIFY_ONSNATCH = config.checkbox_to_value(nma_notify_onsnatch)
         sickbeard.NMA_NOTIFY_ONDOWNLOAD = config.checkbox_to_value(nma_notify_ondownload)
         sickbeard.NMA_API = nma_api
-        sickbeard.NMA_PRIORITY = nma_priority
+        sickbeard.NMA_PRIORITY = config.to_int(nma_priority)
 
         sickbeard.USE_PUSHALOT = config.checkbox_to_value(use_pushalot)
         sickbeard.PUSHALOT_NOTIFY_ONSNATCH = config.checkbox_to_value(pushalot_notify_onsnatch)
@@ -1389,6 +1390,14 @@ class ConfigNotifications:
         sickbeard.TRAKT_USERNAME = trakt_username
         sickbeard.TRAKT_PASSWORD = trakt_password
         sickbeard.TRAKT_API = trakt_api
+
+        sickbeard.USE_SLACK = config.checkbox_to_value(use_slack)
+        sickbeard.SLACK_NOTIFY_ONSNATCH = config.checkbox_to_value(slack_notify_onsnatch)
+        sickbeard.SLACK_NOTIFY_ONDOWNLOAD = config.checkbox_to_value(slack_notify_ondownload)
+        sickbeard.SLACK_ACCESS_TOKEN = slack_access_token
+        sickbeard.SLACK_CHANNEL = slack_channel
+        sickbeard.SLACK_BOT_NAME = slack_bot_name
+        sickbeard.SLACK_ICON_URL = slack_icon_url
 
         sickbeard.save_config()
 
@@ -2294,6 +2303,16 @@ class Home:
             return result
         else:
             return "{}"
+
+    @cherrypy.expose
+    def testSlack(self, accessToken=None, channel=None, bot_name=None, icon_url=None):
+        cherrypy.response.headers['Cache-Control'] = "max-age=0,no-cache,no-store"
+
+        result = notifiers.slack_notifier.test_notify(accessToken, channel, bot_name, icon_url)
+        if result:
+            return "Slack notification succeeded. Check your Slack clients to make sure it worked"
+        else:
+            return "Error sending Slack notification"
 
     @cherrypy.expose
     def shutdown(self, pid=None):
